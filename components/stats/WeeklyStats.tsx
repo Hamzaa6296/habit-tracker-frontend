@@ -15,7 +15,6 @@ export default function WeeklyChart({
 
   return (
     <div className="rounded-3xl border border-[#E7DFD4] bg-white p-8 shadow-sm">
-      {/* Header */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h2 className="text-2xl font-bold text-[#13254B]">{title}</h2>
@@ -29,8 +28,6 @@ export default function WeeklyChart({
           <option>This Month</option>
         </select>
       </div>
-
-      {/* Chart */}
 
       <div className="mt-12">
         <div className="flex h-72 items-end justify-between gap-3">
