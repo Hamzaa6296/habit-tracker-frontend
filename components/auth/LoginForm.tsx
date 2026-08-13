@@ -1,14 +1,50 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { useState, FormEvent } from "react";
+import { useRouter } from "next/router";
 import { Eye, EyeOff } from "lucide-react";
+import { login } from "@/lib/api/auth";
+import { setAccessToken } from "@/lib/auth";
 
 import GoogleButton from "./GoogleButton";
 import Divider from "./Devider";
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await login({
+        email,
+        password,
+      });
+
+      setAccessToken(response.access_token);
+
+      router.push("/dashboard");
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Invalid email or password",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="w-full">
@@ -28,7 +64,7 @@ export default function LoginForm() {
         <Divider />
       </div>
 
-      <form className="space-y-5">
+      <form onSubmit={handleLogin} className="space-y-5">
         <div>
           <label
             htmlFor="email"
@@ -41,6 +77,8 @@ export default function LoginForm() {
             id="email"
             type="email"
             placeholder="john@example.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             className="h-12 w-full rounded-xl border border-gray-300 px-4 outline-none transition focus:border-[#172544] focus:ring-2 focus:ring-[#172544]/10"
           />
         </div>
