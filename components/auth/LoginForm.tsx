@@ -3,7 +3,7 @@
 import Link from "next/link";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useState, FormEvent } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { login } from "@/lib/api/auth";
 import { setAccessToken } from "@/lib/auth";
@@ -96,6 +96,8 @@ export default function LoginForm() {
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               className="h-12 w-full rounded-xl border border-gray-300 px-4 pr-12 outline-none transition focus:border-[#172544] focus:ring-2 focus:ring-[#172544]/10"
             />
 
@@ -122,6 +124,8 @@ export default function LoginForm() {
             Forgot Password?
           </Link>
         </div>
+
+        {error && <p className="text-sm text-red-500">{error}</p>}
 
         <button
           type="submit"

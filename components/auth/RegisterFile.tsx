@@ -1,14 +1,54 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { useState, FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { register } from "@/lib/api/auth";
 import ProgressSteps from "./ProgressSteps";
 import GoogleButton from "./GoogleButton";
 import Divider from "./Devider";
 
 export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
+
+  const router = useRouter();
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleRegister(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError("");
+
+    if (!termsAccepted) {
+      setError("Please accept the Terms of Service and Privacy Policy.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await register({
+        name,
+        email,
+        password,
+      });
+
+      router.push("/login");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="w-full">
@@ -35,7 +75,7 @@ export default function RegisterForm() {
       </div>
 
       {/* Form */}
-      <form className="space-y-5">
+      <form onSubmit={handleRegister} className="space-y-5">
         {/* Name */}
         <div>
           <label
@@ -49,6 +89,8 @@ export default function RegisterForm() {
             id="name"
             type="text"
             placeholder="John Doe"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
             className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 outline-none transition-all focus:border-[#172544] focus:ring-2 focus:ring-[#172544]/10"
           />
         </div>
@@ -66,6 +108,8 @@ export default function RegisterForm() {
             id="email"
             type="email"
             placeholder="john@example.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 outline-none transition-all focus:border-[#172544] focus:ring-2 focus:ring-[#172544]/10"
           />
         </div>
@@ -84,6 +128,8 @@ export default function RegisterForm() {
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 pr-12 outline-none transition-all focus:border-[#172544] focus:ring-2 focus:ring-[#172544]/10"
             />
 
@@ -102,6 +148,8 @@ export default function RegisterForm() {
           <input
             type="checkbox"
             id="terms"
+            checked={termsAccepted}
+            onChange={(event) => setTermsAccepted(event.target.checked)}
             className="mt-1 h-4 w-4 rounded border-gray-300 accent-[#172544]"
           />
 
@@ -119,11 +167,14 @@ export default function RegisterForm() {
         </div>
 
         {/* Button */}
+
+        {error && <p className="text-sm text-red-500">{error}</p>}
         <button
           type="submit"
+          disabled={loading}
           className="mt-3 h-12 w-full rounded-xl bg-[#172544] font-semibold text-white transition-all hover:bg-[#21335c] active:scale-[0.99]"
         >
-          Continue
+          {loading ? "Creating account..." : "Continue"}
         </button>
       </form>
 
