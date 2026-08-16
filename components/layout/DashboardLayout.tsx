@@ -27,7 +27,6 @@ export default function DashboardLayout({
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Header */}
           <Header title={title} subtitle={subtitle} action={action} />
-
           {/* Content */}
           <div className="flex-1 overflow-y-auto bg-[#faf8f5] p-6 lg:p-8">
             {children}

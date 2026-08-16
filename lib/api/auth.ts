@@ -15,6 +15,15 @@ export interface AuthResponse {
   access_token: string;
 }
 
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  isPro: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export async function register(data: RegisterData) {
   return apiClient("/auth/register", {
     method: "POST",
@@ -22,16 +31,15 @@ export async function register(data: RegisterData) {
   });
 }
 
-export async function login(data: LoginData) {
+export async function login(data: LoginData): Promise<AuthResponse> {
   return apiClient<AuthResponse>("/auth/login", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export async function getProfile(token: string) {
-  return apiClient("/auth/profile", {
+export async function getProfile(): Promise<User> {
+  return apiClient<User>("/auth/profile", {
     method: "GET",
-    token,
   });
 }

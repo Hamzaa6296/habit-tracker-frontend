@@ -1,60 +1,73 @@
 import { apiClient } from "./client";
 
+export interface Habit {
+  _id: string;
+  user: string;
+
+  title: string;
+  discription?: string;
+
+  frequency: "daily" | "weekly" | "monthly";
+
+  weekDays?: number[];
+  monthDays?: number[];
+
+  isActive: boolean;
+
+  currentStreak: number;
+  longestStreak: number;
+  totalCheckIns: number;
+  completionRate: number;
+
+  lastCompletedAt: string | number | null;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateHabitData {
   title: string;
-  description?: string;
+  discription?: string;
+
   frequency: "daily" | "weekly" | "monthly";
+
   weekDays?: number[];
   monthDays?: number[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface UpdateHabitData extends Partial<CreateHabitData> {}
+export type UpdateHabitData = Partial<CreateHabitData>;
 
-export async function getHabits(token: string) {
-  return apiClient("/habits", {
+export async function getHabits(): Promise<Habit[]> {
+  return apiClient<Habit[]>("/habits", {
     method: "GET",
-    token,
   });
 }
 
-export async function getHabit(token: string, habitId: string) {
-  return apiClient(`/habits/${habitId}`, {
+export async function getHabit(habitId: string): Promise<Habit> {
+  return apiClient<Habit>(`/habits/${habitId}`, {
     method: "GET",
-    token,
   });
 }
 
-export async function createHabit(token: string, data: CreateHabitData) {
-  return apiClient("/habits", {
+export async function createHabit(data: CreateHabitData): Promise<Habit> {
+  return apiClient<Habit>("/habits", {
     method: "POST",
-    token,
     body: JSON.stringify(data),
   });
 }
 
 export async function updateHabit(
-  token: string,
   habitId: string,
   data: UpdateHabitData,
-) {
-  return apiClient(`/habits/${habitId}`, {
+): Promise<Habit> {
+  return apiClient<Habit>(`/habits/${habitId}`, {
     method: "PATCH",
-    token,
     body: JSON.stringify(data),
   });
 }
 
-export async function deleteHabit(token: string, habitId: string) {
+export async function deleteHabit(habitId: string) {
   return apiClient(`/habits/${habitId}`, {
     method: "DELETE",
-    token,
-  });
-}
-
-export async function getHabitStats(token: string, habitId: string) {
-  return apiClient(`/habits/${habitId}/stats`, {
-    method: "GET",
-    token,
   });
 }
