@@ -1,26 +1,28 @@
 import { apiClient } from "./client";
 
-export async function completeHabit(token: string, habitId: string) {
-  return apiClient(`/habits/${habitId}/check-ins`, {
+export interface Checkin {
+  _id: string;
+  habit: string;
+  user: string;
+  date: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function completeHabit(habitId: string): Promise<Checkin> {
+  return apiClient<Checkin>(`/habits/${habitId}/checkins`, {
     method: "POST",
-    token,
   });
 }
 
-export async function getCheckins(token: string, habitId: string) {
-  return apiClient(`/habits/${habitId}/check-ins`, {
+export async function getCheckins(habitId: string): Promise<Checkin[]> {
+  return apiClient<Checkin[]>(`/habits/${habitId}/checkins`, {
     method: "GET",
-    token,
   });
 }
 
-export async function deleteCheckin(
-  token: string,
-  habitId: string,
-  checkinId: string,
-) {
-  return apiClient(`/habits/${habitId}/check-ins/${checkinId}`, {
+export async function deleteCheckin(habitId: string, checkInId: string) {
+  return apiClient(`/habits/${habitId}/checkins/${checkInId}`, {
     method: "DELETE",
-    token,
   });
 }

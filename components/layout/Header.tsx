@@ -27,7 +27,7 @@ export default function Header({ title, subtitle, action }: HeaderProps) {
               </p>
             )}
 
-            <h1 className="mt-1 font-serif text-3xl font-bold text-[#13254B] lg:text-[44px]">
+            <h1 className="mt-1 font-serif text-3xl font-bold text-[#13254B] lg:text-[27px]">
               {title}
             </h1>
           </div>

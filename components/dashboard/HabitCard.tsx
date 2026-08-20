@@ -11,6 +11,7 @@ interface HabitCardProps {
   color?: "green" | "blue" | "orange" | "purple";
   progress?: boolean[];
   onToggle?: () => void;
+  loading?: boolean;
 }
 
 const colorVariants = {
@@ -44,19 +45,25 @@ export default function HabitCard({
   color = "green",
   progress = [true, true, true, false, true, true, false],
   onToggle,
+  loading = false,
 }: HabitCardProps) {
   const theme = colorVariants[color];
 
   return (
     <div className="group rounded-2xl border border-[#E7DFD4] bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       {/* Top */}
+
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           {/* Checkbox */}
+
           <button
+            type="button"
             onClick={onToggle}
+            disabled={loading}
             className={clsx(
               "flex h-7 w-7 items-center justify-center rounded-full border-2 transition-all",
+              loading && "cursor-not-allowed opacity-50",
               completed
                 ? "border-[#2F7650] bg-[#2F7650]"
                 : "border-gray-300 bg-white hover:border-[#2F7650]",
@@ -68,6 +75,7 @@ export default function HabitCard({
           </button>
 
           {/* Icon */}
+
           <div
             className={clsx(
               "flex h-12 w-12 items-center justify-center rounded-xl text-white",
@@ -78,6 +86,7 @@ export default function HabitCard({
           </div>
 
           {/* Title */}
+
           <div>
             <h3 className="font-semibold text-[#13254B]">{title}</h3>
 
@@ -87,14 +96,21 @@ export default function HabitCard({
           </div>
         </div>
 
-        <button className="rounded-lg p-2 text-slate-400 transition hover:bg-gray-100 hover:text-slate-700">
+        {/* More */}
+
+        <button
+          type="button"
+          className="rounded-lg p-2 text-slate-400 transition hover:bg-gray-100 hover:text-slate-700"
+        >
           <MoreHorizontal size={18} />
         </button>
       </div>
 
       {/* Bottom */}
+
       <div className="mt-6 flex items-center justify-between">
-        {/* Progress Dots */}
+        {/* Progress */}
+
         <div className="flex items-center gap-2">
           {progress.map((day, index) => (
             <span
@@ -108,6 +124,7 @@ export default function HabitCard({
         </div>
 
         {/* Streak */}
+
         <div
           className={clsx(
             "flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold",

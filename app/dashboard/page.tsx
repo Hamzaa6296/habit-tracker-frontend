@@ -11,47 +11,243 @@ import AddHabitModal from "@/components/dashboard/AddHabitModal";
 
 import { Flame, Target, CheckCircle2, Trophy } from "lucide-react";
 
-import { getProfile, User } from "@/lib/api/auth";
-import { getHabits, Habit } from "@/lib/api/habits";
+import { getHabits, type Habit } from "@/lib/api/habits";
+import { getProfile, type User } from "@/lib/api/auth";
+
+import {
+  completeHabit,
+  deleteCheckin,
+  getCheckins,
+  type Checkin,
+} from "@/lib/api/checkins";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
+
   const [habits, setHabits] = useState<Habit[]>([]);
 
+  const [checkins, setCheckins] = useState<Record<string, Checkin | null>>({});
+
+  const [checkingIn, setCheckingIn] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
+
   const [showAddHabitModal, setShowAddHabitModal] = useState(false);
 
-  const loadHabits = async () => {
+  /*
+   * ============================================================
+   * LOAD DASHBOARD
+   * ============================================================
+   */
+
+  async function loadDashboard() {
     try {
+      setLoading(true);
+      setError("");
+
+      // Load profile
+      const userData = await getProfile();
+      setUser(userData);
+
+      // Load habits
       const habitsData = await getHabits();
       setHabits(habitsData);
+
+      // Load today's check-ins
+      const checkinEntries = await Promise.all(
+        habitsData.map(async (habit) => {
+          try {
+            const data = await getCheckins(habit._id);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const todayCheckin =
+              data.find((checkin) => {
+                const checkinDate = new Date(checkin.date);
+                checkinDate.setHours(0, 0, 0, 0);
+
+                return checkinDate.getTime() === today.getTime();
+              }) ?? null;
+
+            return [habit._id, todayCheckin] as const;
+          } catch (error) {
+            console.error(
+              `Failed to load check-ins for habit ${habit._id}:`,
+              error,
+            );
+
+            // Don't destroy the entire dashboard
+            // if one check-in request fails.
+            return [habit._id, null] as const;
+          }
+        }),
+      );
+
+      setCheckins(Object.fromEntries(checkinEntries));
     } catch (error) {
-      console.error("Failed to load habits:", error);
+      console.error("Failed to load dashboard:", error);
+
+      setError(
+        error instanceof Error ? error.message : "Failed to load dashboard",
+      );
+    } finally {
+      setLoading(false);
     }
-  };
+  }
+
+  /*
+   * ============================================================
+   * INITIAL LOAD
+   * ============================================================
+   */
 
   useEffect(() => {
-    async function loadDashboard() {
-      try {
-        const profile = await getProfile();
-
-        setUser(profile);
-
-        await loadHabits();
-      } catch (error) {
-        console.error("Failed to load dashboard:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDashboard();
   }, []);
 
+  /*
+   * ============================================================
+   * CREATE / DELETE CHECK-IN
+   * ============================================================
+   */
+
+  async function handleCheckin(habitId: string) {
+    const habit = habits.find((h) => h._id === habitId);
+
+    if (!habit) return;
+
+    const existingCheckin = checkins[habitId];
+
+    try {
+      setCheckingIn(habitId);
+
+      // =========================
+      // UNCHECK
+      // =========================
+      if (existingCheckin) {
+        // Update UI immediately
+        setCheckins((prev) => ({
+          ...prev,
+          [habitId]: null,
+        }));
+
+        setHabits((prev) =>
+          prev.map((habit) =>
+            habit._id === habitId
+              ? {
+                  ...habit,
+                  totalCheckIns: Math.max(0, habit.totalCheckIns - 1),
+                  currentStreak: Math.max(0, habit.currentStreak - 1),
+                  completionRate: Math.max(
+                    0,
+                    Number(
+                      (
+                        (Math.max(0, habit.totalCheckIns - 1) /
+                          Math.max(1, habit.totalCheckIns)) *
+                        habit.completionRate
+                      ).toFixed(2),
+                    ),
+                  ),
+                  lastCompletedAt: null,
+                }
+              : habit,
+          ),
+        );
+
+        // API in background
+        await deleteCheckin(habitId, existingCheckin._id);
+
+        return;
+      }
+
+      // =========================
+      // CHECK IN
+      // =========================
+
+      // Temporary optimistic check-in
+      const optimisticCheckin = {
+        // eslint-disable-next-line react-hooks/purity
+        _id: `temp-${Date.now()}`,
+        habit: habitId,
+        user: habit.user,
+        date: new Date().toISOString(),
+      };
+
+      // Update checkbox immediately
+      setCheckins((prev) => ({
+        ...prev,
+        [habitId]: optimisticCheckin,
+      }));
+
+      // Update habit stats immediately
+      setHabits((prev) =>
+        prev.map((habit) =>
+          habit._id === habitId
+            ? {
+                ...habit,
+                totalCheckIns: habit.totalCheckIns + 1,
+                currentStreak: habit.currentStreak + 1,
+                longestStreak: Math.max(
+                  habit.longestStreak,
+                  habit.currentStreak + 1,
+                ),
+                lastCompletedAt: new Date().toISOString(),
+              }
+            : habit,
+        ),
+      );
+
+      // API request
+      const newCheckin = await completeHabit(habitId);
+
+      // Replace temporary check-in with real DB check-in
+      setCheckins((prev) => ({
+        ...prev,
+        [habitId]: newCheckin,
+      }));
+    } catch (error) {
+      console.error("Failed to update check-in:", error);
+
+      // Rollback UI
+      setCheckins((prev) => ({
+        ...prev,
+        [habitId]: existingCheckin ?? null,
+      }));
+
+      // Reload only if something actually failed
+      await loadDashboard();
+    } finally {
+      setCheckingIn(null);
+    }
+  }
+
+  /*
+   * ============================================================
+   * TODAY'S COMPLETED HABITS
+   * ============================================================
+   *
+   * We use the checkins state instead of lastCompletedAt.
+   *
+   * Why?
+   *
+   * lastCompletedAt represents the latest completion historically.
+   * checkins[habitId] specifically tells us whether the habit
+   * has been completed TODAY.
+   */
+
   const completedToday = useMemo(() => {
-    return habits.filter((habit) => habit.lastCompletedAt).length;
-  }, [habits]);
+    return habits.filter((habit) => Boolean(checkins[habit._id])).length;
+  }, [habits, checkins]);
+
+  /*
+   * ============================================================
+   * DASHBOARD STATISTICS
+   * ============================================================
+   */
 
   const totalHabits = habits.length;
 
@@ -71,6 +267,12 @@ export default function DashboardPage() {
         )
       : 0;
 
+  /*
+   * ============================================================
+   * LOADING
+   * ============================================================
+   */
+
   if (loading) {
     return (
       <DashboardLayout title="Loading..." subtitle="">
@@ -81,15 +283,34 @@ export default function DashboardPage() {
     );
   }
 
+  /*
+   * ============================================================
+   * ERROR
+   * ============================================================
+   */
+
   if (error) {
     return (
       <DashboardLayout title="Dashboard" subtitle="">
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
           <p className="text-red-600">{error}</p>
+
+          <button
+            onClick={loadDashboard}
+            className="mt-4 rounded-lg bg-[#172544] px-4 py-2 text-sm font-medium text-white"
+          >
+            Try Again
+          </button>
         </div>
       </DashboardLayout>
     );
   }
+
+  /*
+   * ============================================================
+   * DASHBOARD
+   * ============================================================
+   */
 
   return (
     <>
@@ -109,7 +330,9 @@ export default function DashboardPage() {
           </button>
         }
       >
-        {/* Stats */}
+        {/* ===================================================== */}
+        {/* STATS */}
+        {/* ===================================================== */}
 
         <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <StatCard
@@ -146,10 +369,14 @@ export default function DashboardPage() {
           />
         </section>
 
-        {/* Main Content */}
+        {/* ===================================================== */}
+        {/* MAIN CONTENT */}
+        {/* ===================================================== */}
 
         <section className="mt-8 grid gap-8 xl:grid-cols-[360px_1fr]">
-          {/* Left */}
+          {/* =================================================== */}
+          {/* LEFT SIDE */}
+          {/* =================================================== */}
 
           <div className="space-y-6">
             <ProgressCircle
@@ -158,24 +385,33 @@ export default function DashboardPage() {
               subLabel={`${completedToday} of ${totalHabits} habits completed`}
             />
 
+            {/* Upcoming */}
             <div className="rounded-3xl border border-[#E7DFD4] bg-white p-6">
               <h2 className="text-xl font-semibold text-[#13254B]">Upcoming</h2>
 
               <div className="mt-5 space-y-4">
-                {habits.slice(0, 2).map((habit) => (
-                  <UpcomingCard
-                    key={habit._id}
-                    title={habit.title}
-                    date="Today"
-                    time="Anytime"
-                    category={habit.frequency}
-                  />
-                ))}
+                {habits.length === 0 ? (
+                  <p className="text-sm text-slate-500">No upcoming habits.</p>
+                ) : (
+                  habits
+                    .slice(0, 2)
+                    .map((habit) => (
+                      <UpcomingCard
+                        key={habit._id}
+                        title={habit.title}
+                        date="Today"
+                        time="Anytime"
+                        category={habit.frequency}
+                      />
+                    ))
+                )}
               </div>
             </div>
           </div>
 
-          {/* Right */}
+          {/* =================================================== */}
+          {/* RIGHT SIDE */}
+          {/* =================================================== */}
 
           <div className="rounded-3xl border border-[#E7DFD4] bg-white p-7">
             <div className="flex items-center justify-between">
@@ -192,12 +428,20 @@ export default function DashboardPage() {
               </button>
             </div>
 
+            {/* Habits */}
             <div className="mt-8 space-y-5">
               {habits.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-[#E7DFD4] p-8 text-center">
                   <p className="text-slate-500">
                     You dont have any habits yet.
                   </p>
+
+                  <button
+                    onClick={() => setShowAddHabitModal(true)}
+                    className="mt-4 rounded-xl bg-[#2F7650] px-5 py-2.5 font-semibold text-white hover:bg-[#275f41]"
+                  >
+                    Add Your First Habit
+                  </button>
                 </div>
               ) : (
                 habits.map((habit) => (
@@ -206,7 +450,10 @@ export default function DashboardPage() {
                     title={habit.title}
                     description={habit.discription}
                     streak={habit.currentStreak}
-                    completed={Boolean(habit.lastCompletedAt)}
+                    completed={Boolean(checkins[habit._id])}
+                    color="green"
+                    onToggle={() => handleCheckin(habit._id)}
+                    loading={checkingIn === habit._id}
                   />
                 ))
               )}
@@ -215,10 +462,14 @@ export default function DashboardPage() {
         </section>
       </DashboardLayout>
 
+      {/* ======================================================= */}
+      {/* ADD HABIT MODAL */}
+      {/* ======================================================= */}
+
       <AddHabitModal
         isOpen={showAddHabitModal}
         onClose={() => setShowAddHabitModal(false)}
-        onHabitCreated={loadHabits}
+        onHabitCreated={loadDashboard}
       />
     </>
   );

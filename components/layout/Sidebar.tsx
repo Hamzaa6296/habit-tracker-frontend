@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   CheckSquare,
   BarChart3,
   Settings,
   Flame,
+  LogOut,
 } from "lucide-react";
+import { removeAccessToken } from "@/lib/auth";
 
 const navigation = [
   {
@@ -35,6 +37,15 @@ const navigation = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    // Remove JWT from localStorage
+    removeAccessToken();
+
+    // Redirect to login
+    router.replace("/login");
+  };
 
   return (
     <aside className="hidden w-[260px] shrink-0 border-r border-[#e7dfd4] bg-white lg:flex lg:flex-col">
@@ -67,13 +78,11 @@ export default function Sidebar() {
               <li key={item.name}>
                 <Link
                   href={item.href}
-                  className={`group flex items-center gap-4 rounded-xl px-4 py-3 text-[16px] font-medium transition-all duration-200
-                    ${
-                      active
-                        ? "bg-[#E7F0EA] text-[#2F7650]"
-                        : "text-slate-600 hover:bg-gray-100 hover:text-[#13254B]"
-                    }
-                  `}
+                  className={`group flex items-center gap-4 rounded-xl px-4 py-3 text-[16px] font-medium transition-all duration-200 ${
+                    active
+                      ? "bg-[#E7F0EA] text-[#2F7650]"
+                      : "text-slate-600 hover:bg-gray-100 hover:text-[#13254B]"
+                  }`}
                 >
                   <Icon
                     size={20}
@@ -121,6 +130,17 @@ export default function Sidebar() {
             <p className="text-sm text-slate-500">Free plan</p>
           </div>
         </div>
+
+        {/* Logout */}
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="mt-5 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition-all duration-200 hover:bg-red-50 hover:text-red-600"
+        >
+          <LogOut size={19} />
+
+          <span>Logout</span>
+        </button>
       </div>
     </aside>
   );
