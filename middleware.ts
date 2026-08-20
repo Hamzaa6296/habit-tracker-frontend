@@ -1,20 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const protectedRoutes = ["/dashboard", "/habits", "/stats", "/settings"];
+
+const authRoutes = ["/login", "/register"];
+
 export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
   const token = request.cookies.get("access_token")?.value;
 
-  const isDashboardRoute = request.nextUrl.pathname.startsWith("/dashboard");
+  const isProtectedRoute = protectedRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
 
-  const isAuthRoute =
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/register");
+  const isAuthRoute = authRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
 
-  // User trying to access dashboard without authentication
-  if (isDashboardRoute && !token) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  // User is trying to access a protected page
+  // without authentication.
+  if (isProtectedRoute && !token) {
+    const loginUrl = new URL("/login", request.url);
+
+    // Optional: remember where the user wanted to go.
+    loginUrl.searchParams.set("callbackUrl", pathname);
+
+    return NextResponse.redirect(loginUrl);
   }
 
-  // User already logged in trying to access login/register
+  // User is already authenticated and tries to
+  // visit login/register.
   if (isAuthRoute && token) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
@@ -23,5 +38,12 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/register"],
+  matcher: [
+    "/dashboard/:path*",
+    "/habits/:path*",
+    "/stats/:path*",
+    "/settings/:path*",
+    "/login",
+    "/register",
+  ],
 };

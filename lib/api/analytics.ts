@@ -1,22 +1,27 @@
 import { apiClient } from "./client";
 
-export async function getWeeklyAnalytics(token: string) {
-  return apiClient("/analytics/weekly", {
+export interface AnalyticsResponse {
+  period: number;
+  totalHabits: number;
+  totalCheckIns: number;
+  completionRate: number;
+  dailyDate: Record<string, number>;
+}
+
+export async function getWeeklyAnalytics(): Promise<AnalyticsResponse> {
+  return apiClient<AnalyticsResponse>("/analytics/weekly", {
     method: "GET",
-    token,
   });
 }
 
-export async function getMonthlyAnalytics(token: string) {
-  return apiClient("/analytics/monthly", {
+export async function getMonthlyAnalytics(): Promise<AnalyticsResponse> {
+  return apiClient<AnalyticsResponse>("/analytics/monthly", {
     method: "GET",
-    token,
   });
 }
 
-export async function getYearlyAnalytics(token: string) {
-  return apiClient("/analytics/yearly", {
+export async function getYearlyAnalytics(): Promise<AnalyticsResponse> {
+  return apiClient<AnalyticsResponse>("/analytics/yearly", {
     method: "GET",
-    token,
   });
 }
