@@ -1,34 +1,52 @@
-/* eslint-disable react-hooks/purity */
+"use client";
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatCard from "@/components/dashboard/StatCard";
 import ProgressCircle from "@/components/dashboard/ProgressCircle";
+import Heatmap from "@/components/habits/HeatMap";
+import { getHeatmapAnalytics } from "@/lib/api/analytics";
+import { useEffect, useState } from "react";
+import {
+  Calendar,
+  Clock3,
+  Flame,
+  Target,
+  Pencil,
+  Trash2,
+  RefreshCw,
+} from "lucide-react";
 
-import { Calendar, Clock3, Flame, Target, Pencil, Trash2 } from "lucide-react";
+interface HeatmapData {
+  [date: string]: number;
+}
 
 export default function HabitDetailPage() {
-  return (
-    <DashboardLayout
-      title="Morning Run"
-      subtitle="Habit Details"
-      action={
-        <div className="flex gap-3">
-          <button className="flex items-center gap-2 rounded-xl border border-[#E7DFD4] bg-white px-5 py-3 font-medium hover:bg-gray-50">
-            <Pencil size={18} />
-            Edit
-          </button>
+  const [heatmap, setHeatmap] = useState<HeatmapData>({});
+  const [loadingHeatmap, setLoadingHeatmap] = useState(true);
 
-          <button className="flex items-center gap-2 rounded-xl border border-red-200 bg-white px-5 py-3 font-medium text-red-600 hover:bg-red-50">
-            <Trash2 size={18} />
-            Archive
-          </button>
-        </div>
+  useEffect(() => {
+    async function loadHeatmap() {
+      try {
+        setLoadingHeatmap(true);
+
+        const response = await getHeatmapAnalytics(126);
+
+        setHeatmap(response.dailyActivity);
+      } catch (error) {
+        console.error("Failed to load heatmap:", error);
+      } finally {
+        setLoadingHeatmap(false);
       }
-    >
-      {/* Top Summary */}
+    }
 
+    loadHeatmap();
+  }, []);
+
+  return (
+    <DashboardLayout title="Morning Run" subtitle="Habit Details">
+      {/* Top Summary */}
       <section className="grid gap-6 lg:grid-cols-[340px_1fr]">
         {/* Left */}
-
         <ProgressCircle
           value={94}
           label="Completion Rate"
@@ -36,7 +54,6 @@ export default function HabitDetailPage() {
         />
 
         {/* Right */}
-
         <div className="rounded-3xl border border-[#E7DFD4] bg-white p-8">
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full bg-[#E8F3EC] px-4 py-2 text-sm font-semibold text-[#2F7650]">
@@ -63,7 +80,6 @@ export default function HabitDetailPage() {
 
               <div>
                 <p className="text-sm text-slate-500">Reminder</p>
-
                 <p className="font-semibold">7:00 AM</p>
               </div>
             </div>
@@ -73,7 +89,6 @@ export default function HabitDetailPage() {
 
               <div>
                 <p className="text-sm text-slate-500">Schedule</p>
-
                 <p className="font-semibold">Every Day</p>
               </div>
             </div>
@@ -83,7 +98,6 @@ export default function HabitDetailPage() {
 
               <div>
                 <p className="text-sm text-slate-500">Goal</p>
-
                 <p className="font-semibold">30 Minutes</p>
               </div>
             </div>
@@ -92,7 +106,6 @@ export default function HabitDetailPage() {
       </section>
 
       {/* Statistics */}
-
       <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Current Streak"
@@ -112,29 +125,23 @@ export default function HabitDetailPage() {
         />
       </section>
 
-      {/* Heatmap */}
-
-      <section className="mt-8 rounded-3xl border border-[#E7DFD4] bg-white p-8">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-[#13254B]">
-            Activity History
-          </h2>
-
-          <button className="rounded-xl border px-5 py-2 hover:bg-gray-50">
-            View Full History
-          </button>
-        </div>
-
-        <div className="mt-10 grid grid-cols-18 gap-2">
-          {Array.from({ length: 126 }).map((_, index) => (
-            <div
-              key={index}
-              className={`aspect-square rounded
-                
-                ${Math.random() > 0.35 ? "bg-[#2F7650]" : "bg-[#E7DFD4]"}`}
-            />
-          ))}
-        </div>
+      {/* Real Heatmap */}
+      <section className="mt-8">
+        {loadingHeatmap ? (
+          <div className="flex min-h-[300px] items-center justify-center rounded-3xl border border-[#E7DFD4] bg-white">
+            <div className="flex items-center gap-3 text-slate-500">
+              <RefreshCw size={20} className="animate-spin" />
+              Loading activity history...
+            </div>
+          </div>
+        ) : (
+          <Heatmap
+            title="Activity History"
+            data={heatmap}
+            weeks={18}
+            cellSize={16}
+          />
+        )}
       </section>
     </DashboardLayout>
   );
