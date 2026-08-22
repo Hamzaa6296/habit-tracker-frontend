@@ -7,16 +7,27 @@ interface HeaderProps {
   title: string;
   subtitle?: string;
   action?: ReactNode;
+  onMenuClick?: () => void;
 }
 
-export default function Header({ title, subtitle, action }: HeaderProps) {
+export default function Header({
+  title,
+  subtitle,
+  action,
+  onMenuClick,
+}: HeaderProps) {
   return (
     <header className="sticky top-0 z-20 border-b border-[#e8e2d9] bg-white">
       <div className="flex items-center justify-between px-6 py-5 lg:px-8">
         {/* Left */}
         <div className="flex items-center gap-4">
           {/* Mobile Menu */}
-          <button className="rounded-xl border border-[#e6e0d8] p-2 text-slate-600 transition hover:bg-gray-50 lg:hidden">
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="rounded-xl border border-[#e6e0d8] p-2 text-slate-600 transition hover:bg-gray-50 lg:hidden"
+            aria-label="Open navigation"
+          >
             <Menu size={20} />
           </button>
 
@@ -27,7 +38,7 @@ export default function Header({ title, subtitle, action }: HeaderProps) {
               </p>
             )}
 
-            <h1 className="mt-1 font-serif text-3xl font-bold text-[#13254B] lg:text-[27px]">
+            <h1 className="mt-1 font-serif text-xl font-bold text-[#13254B] lg:text-[27px]">
               {title}
             </h1>
           </div>
@@ -36,7 +47,10 @@ export default function Header({ title, subtitle, action }: HeaderProps) {
         {/* Right */}
         <div className="flex items-center gap-3">
           {/* Notification */}
-          <button className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#e6e0d8] bg-white transition-all hover:bg-gray-50">
+          <button
+            type="button"
+            className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#e6e0d8] bg-white transition-all hover:bg-gray-50"
+          >
             <Bell size={20} className="text-[#5E6D91]" />
           </button>
 

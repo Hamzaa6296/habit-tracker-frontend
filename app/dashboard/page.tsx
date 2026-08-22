@@ -324,9 +324,9 @@ export default function DashboardPage() {
         action={
           <button
             onClick={() => setShowAddHabitModal(true)}
-            className="rounded-xl bg-[#2F7650] px-6 py-3 font-semibold text-white transition hover:bg-[#275f41]"
+            className="rounded-xl bg-[#2F7650] md:px-6 px-3 md:py-3.5 py-1.5 md:text-sm text-xs font-semibold text-white transition hover:bg-[#275f41]"
           >
-            + Add Habit
+            Add Habit
           </button>
         }
       >
@@ -386,7 +386,7 @@ export default function DashboardPage() {
             />
 
             {/* Upcoming */}
-            <div className="rounded-3xl border border-[#E7DFD4] bg-white p-6">
+            <div className="rounded-3xl border border-[#E7DFD4] bg-white p-4">
               <h2 className="text-xl font-semibold text-[#13254B]">Upcoming</h2>
 
               <div className="mt-5 space-y-4">
@@ -413,7 +413,7 @@ export default function DashboardPage() {
           {/* RIGHT SIDE */}
           {/* =================================================== */}
 
-          <div className="rounded-3xl border border-[#E7DFD4] bg-white p-7">
+          <div className="rounded-3xl border border-[#E7DFD4] bg-white p-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-[#13254B]">
@@ -422,10 +422,6 @@ export default function DashboardPage() {
 
                 <p className="mt-1 text-slate-500">Stay consistent.</p>
               </div>
-
-              <button className="rounded-xl border border-[#E7DFD4] px-5 py-2 font-medium hover:bg-gray-50">
-                View All
-              </button>
             </div>
 
             {/* Habits */}

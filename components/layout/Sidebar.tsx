@@ -9,6 +9,7 @@ import {
   Settings,
   Flame,
   LogOut,
+  X,
 } from "lucide-react";
 import { removeAccessToken } from "@/lib/auth";
 
@@ -35,34 +36,67 @@ const navigation = [
   },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+  userName?: string;
+  userEmail?: string;
+}
+
+export default function Sidebar({
+  mobileOpen = false,
+  onClose,
+  userName = "User",
+  userEmail = "",
+}: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
   const handleLogout = () => {
-    // Remove JWT from localStorage
     removeAccessToken();
-
-    // Redirect to login
     router.replace("/login");
   };
 
-  return (
-    <aside className="hidden w-[260px] shrink-0 border-r border-[#e7dfd4] bg-white lg:flex lg:flex-col">
+  const initials =
+    userName
+      .split(" ")
+      .map((name) => name[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "U";
+
+  const sidebarContent = (
+    <>
       {/* Logo */}
       <div className="border-b border-[#e7dfd4] px-8 py-8">
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="flex gap-[2px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#d8a62d]" />
-            <span className="h-1.5 w-1.5 rounded-full bg-[#d8a62d]" />
-            <span className="h-1.5 w-1.5 rounded-full bg-[#d8a62d]" />
-            <span className="h-1.5 w-1.5 rounded-full bg-[#d8a62d]" />
-          </div>
+        <div className="flex items-center justify-between">
+          <Link
+            href="/dashboard"
+            onClick={onClose}
+            className="flex items-center gap-3"
+          >
+            <div className="flex gap-[2px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#d8a62d]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#d8a62d]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#d8a62d]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#d8a62d]" />
+            </div>
 
-          <span className="font-serif text-xl font-bold text-[#13254B]">
-            Threadwork
-          </span>
-        </Link>
+            <span className="font-serif text-xl font-bold text-[#13254B]">
+              Threadwork
+            </span>
+          </Link>
+
+          {/* Mobile Close */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl p-2 text-slate-500 hover:bg-gray-100 lg:hidden"
+            aria-label="Close navigation"
+          >
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -78,6 +112,7 @@ export default function Sidebar() {
               <li key={item.name}>
                 <Link
                   href={item.href}
+                  onClick={onClose}
                   className={`group flex items-center gap-4 rounded-xl px-4 py-3 text-[16px] font-medium transition-all duration-200 ${
                     active
                       ? "bg-[#E7F0EA] text-[#2F7650]"
@@ -121,13 +156,13 @@ export default function Sidebar() {
       <div className="border-t border-[#ECE7DE] px-6 py-6">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#2F7650] text-sm font-bold text-white">
-            AY
+            {initials}
           </div>
 
-          <div>
-            <p className="font-semibold text-[#13254B]">Amara Yusuf</p>
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-[#13254B]">{userName}</p>
 
-            <p className="text-sm text-slate-500">Free plan</p>
+            <p className="truncate text-sm text-slate-500">Free plan</p>
           </div>
         </div>
 
@@ -138,10 +173,35 @@ export default function Sidebar() {
           className="mt-5 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition-all duration-200 hover:bg-red-50 hover:text-red-600"
         >
           <LogOut size={19} />
-
           <span>Logout</span>
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="hidden w-[260px] shrink-0 border-r border-[#e7dfd4] bg-white lg:flex lg:flex-col">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Mobile Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-white shadow-2xl transition-transform duration-300 lg:hidden ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   );
 }
