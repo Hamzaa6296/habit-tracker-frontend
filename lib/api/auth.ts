@@ -24,6 +24,15 @@ export interface User {
   updatedAt: string;
 }
 
+export interface UpdateProfileData {
+  name: string;
+  email: string;
+}
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export async function register(data: RegisterData) {
   return apiClient("/auth/register", {
     method: "POST",
@@ -41,5 +50,19 @@ export async function login(data: LoginData): Promise<AuthResponse> {
 export async function getProfile(): Promise<User> {
   return apiClient<User>("/auth/profile", {
     method: "GET",
+  });
+}
+
+export async function changePassword(data: ChangePasswordData) {
+  return apiClient("/auth/change-password", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateProfile(data: UpdateProfileData): Promise<User> {
+  return apiClient<User>("/auth/profile", {
+    method: "PATCH",
+    body: JSON.stringify(data),
   });
 }
