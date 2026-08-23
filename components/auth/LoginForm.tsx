@@ -8,9 +8,6 @@ import { Eye, EyeOff } from "lucide-react";
 import { login } from "@/lib/api/auth";
 import { setAccessToken } from "@/lib/auth";
 
-import GoogleButton from "./GoogleButton";
-import Divider from "./Devider";
-
 export default function LoginForm() {
   const router = useRouter();
 
@@ -77,24 +74,13 @@ export default function LoginForm() {
   return (
     <div className="w-full">
       {/* Heading */}
-      <div className="mt-6">
+      <div className="mb-20 text-center">
         <h1 className="text-3xl font-bold text-slate-900">Welcome back</h1>
 
         <p className="mt-2 text-sm text-slate-500">
           Sign in to continue your journey.
         </p>
       </div>
-
-      {/* Google */}
-      <div className="mt-8">
-        <GoogleButton />
-      </div>
-
-      {/* Divider */}
-      <div className="my-8">
-        <Divider />
-      </div>
-
       {/* Form */}
       <form onSubmit={handleLogin} className="space-y-5">
         {/* Email */}

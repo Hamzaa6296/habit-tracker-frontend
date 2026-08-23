@@ -7,8 +7,6 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { register } from "@/lib/api/auth";
 import ProgressSteps from "./ProgressSteps";
-import GoogleButton from "./GoogleButton";
-import Divider from "./Devider";
 
 export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -56,22 +54,12 @@ export default function RegisterForm() {
       <ProgressSteps />
 
       {/* Heading */}
-      <div className="mt-10">
+      <div className="my-10 text-center">
         <h1 className="text-3xl font-bold text-slate-900">Create an account</h1>
 
         <p className="mt-2 text-sm text-slate-500">
           Start building better habits today.
         </p>
-      </div>
-
-      {/* Google */}
-      <div className="mt-8">
-        <GoogleButton />
-      </div>
-
-      {/* Divider */}
-      <div className="my-8">
-        <Divider />
       </div>
 
       {/* Form */}
