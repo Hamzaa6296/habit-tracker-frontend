@@ -8,10 +8,18 @@ import HabitCard from "@/components/dashboard/HabitCard";
 import ProgressCircle from "@/components/dashboard/ProgressCircle";
 import UpcomingCard from "@/components/dashboard/UpcomingCard";
 import AddHabitModal from "@/components/dashboard/AddHabitModal";
+import EditHabitModal from "@/components/habits/EditHabitModal";
+import DeleteHabitModal from "@/components/habits/DeleteHabitModal";
 
 import { Flame, Target, CheckCircle2, Trophy } from "lucide-react";
 
-import { getHabits, type Habit } from "@/lib/api/habits";
+import {
+  getHabits,
+  updateHabit,
+  deleteHabit,
+  type Habit,
+  type UpdateHabitData,
+} from "@/lib/api/habits";
 import { getProfile, type User } from "@/lib/api/auth";
 
 import {
@@ -25,6 +33,12 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
 
   const [habits, setHabits] = useState<Habit[]>([]);
+
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+
+  const [deletingHabit, setDeletingHabit] = useState<Habit | null>(null);
+
+  const [actionLoading, setActionLoading] = useState(false);
 
   const [checkins, setCheckins] = useState<Record<string, Checkin | null>>({});
 
@@ -41,6 +55,52 @@ export default function DashboardPage() {
    * LOAD DASHBOARD
    * ============================================================
    */
+
+  async function handleDeleteHabit() {
+    if (!deletingHabit) return;
+
+    try {
+      setActionLoading(true);
+
+      await deleteHabit(deletingHabit._id);
+
+      setHabits((current) =>
+        current.filter((habit) => habit._id !== deletingHabit._id),
+      );
+
+      setDeletingHabit(null);
+    } catch (error) {
+      console.error("Failed to delete habit:", error);
+
+      alert(error instanceof Error ? error.message : "Failed to delete habit");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleUpdateHabit(data: UpdateHabitData) {
+    if (!editingHabit) return;
+
+    try {
+      setActionLoading(true);
+
+      const updatedHabit = await updateHabit(editingHabit._id, data);
+
+      setHabits((current) =>
+        current.map((habit) =>
+          habit._id === updatedHabit._id ? updatedHabit : habit,
+        ),
+      );
+
+      setEditingHabit(null);
+    } catch (error) {
+      console.error("Failed to update habit:", error);
+
+      alert(error instanceof Error ? error.message : "Failed to update habit");
+    } finally {
+      setActionLoading(false);
+    }
+  }
 
   async function loadDashboard() {
     try {
@@ -443,12 +503,15 @@ export default function DashboardPage() {
                 habits.map((habit) => (
                   <HabitCard
                     key={habit._id}
+                    id={habit._id}
                     title={habit.title}
                     description={habit.discription}
                     streak={habit.currentStreak}
                     completed={Boolean(checkins[habit._id])}
                     color="green"
                     onToggle={() => handleCheckin(habit._id)}
+                    onEdit={() => setEditingHabit(habit)}
+                    onDelete={() => setDeletingHabit(habit)}
                     loading={checkingIn === habit._id}
                   />
                 ))
@@ -466,6 +529,22 @@ export default function DashboardPage() {
         isOpen={showAddHabitModal}
         onClose={() => setShowAddHabitModal(false)}
         onHabitCreated={loadDashboard}
+      />
+
+      <EditHabitModal
+        habit={editingHabit}
+        open={Boolean(editingHabit)}
+        loading={actionLoading}
+        onClose={() => setEditingHabit(null)}
+        onSubmit={handleUpdateHabit}
+      />
+
+      <DeleteHabitModal
+        habitTitle={deletingHabit?.title}
+        open={Boolean(deletingHabit)}
+        loading={actionLoading}
+        onClose={() => setDeletingHabit(null)}
+        onConfirm={handleDeleteHabit}
       />
     </>
   );

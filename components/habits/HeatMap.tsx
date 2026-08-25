@@ -16,38 +16,109 @@ export default function Heatmap({
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   /*
-   * Convert the API object into a 7 × N grid.
+   * ------------------------------------------------------------
+   * Get today's date without UTC timezone shifting
+   * ------------------------------------------------------------
    */
-
   const today = new Date();
 
-  const totalDays = weeks * 7;
+  const todayKey = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
 
-  const todayUTC = new Date(
-    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
-  );
+  /*
+   * ------------------------------------------------------------
+   * Convert date to YYYY-MM-DD
+   * ------------------------------------------------------------
+   */
+  function formatDate(date: Date) {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
 
-  const dates: {
+  /*
+   * ------------------------------------------------------------
+   * Find Monday of the current week
+   *
+   * JS:
+   * Sunday = 0
+   * Monday = 1
+   * Tuesday = 2
+   * ...
+   *
+   * We convert Sunday to 6 so that Monday becomes 0.
+   * ------------------------------------------------------------
+   */
+  const currentDay = today.getDay();
+
+  const daysSinceMonday = currentDay === 0 ? 6 : currentDay - 1;
+
+  const currentMonday = new Date(today);
+
+  currentMonday.setDate(today.getDate() - daysSinceMonday);
+  currentMonday.setHours(0, 0, 0, 0);
+
+  /*
+   * ------------------------------------------------------------
+   * Start from the Monday N weeks ago
+   * ------------------------------------------------------------
+   */
+  const startDate = new Date(currentMonday);
+
+  startDate.setDate(startDate.getDate() - (weeks - 1) * 7);
+
+  /*
+   * ------------------------------------------------------------
+   * Build exactly:
+   *
+   * Monday
+   * Tuesday
+   * Wednesday
+   * Thursday
+   * Friday
+   * Saturday
+   * Sunday
+   *
+   * for every week.
+   * ------------------------------------------------------------
+   */
+  const columns: {
     date: string;
     value: number;
-  }[] = [];
+  }[][] = [];
 
-  for (let i = totalDays - 1; i >= 0; i--) {
-    const date = new Date(todayUTC);
+  for (let week = 0; week < weeks; week++) {
+    const weekDays: {
+      date: string;
+      value: number;
+    }[] = [];
 
-    date.setUTCDate(date.getUTCDate() - i);
+    for (let day = 0; day < 7; day++) {
+      const date = new Date(startDate);
 
-    const key = date.toISOString().split("T")[0];
+      date.setDate(startDate.getDate() + week * 7 + day);
 
-    dates.push({
-      date: key,
-      value: data[key] ?? 0,
-    });
+      const key = formatDate(date);
+
+      weekDays.push({
+        date: key,
+        value: data[key] ?? 0,
+      });
+    }
+
+    columns.push(weekDays);
   }
-  /*
-   * GitHub-style intensity.
-   */
 
+  /*
+   * ------------------------------------------------------------
+   * GitHub-style intensity
+   * ------------------------------------------------------------
+   */
   function getColor(value: number) {
     if (value === 0) {
       return "bg-[#F3F1ED]";
@@ -68,24 +139,9 @@ export default function Heatmap({
     return "bg-[#2F7650]";
   }
 
-  /*
-   * Build columns.
-   *
-   * Each column = one week.
-   */
-
-  const columns = [];
-
-  for (let week = 0; week < weeks; week++) {
-    const weekDays = dates.slice(week * 7, week * 7 + 7);
-
-    columns.push(weekDays);
-  }
-
   return (
     <div className="rounded-3xl border border-[#E7DFD4] bg-white p-8">
       {/* Header */}
-
       <div>
         <h2 className="text-2xl font-bold text-[#13254B]">{title}</h2>
 
@@ -95,12 +151,10 @@ export default function Heatmap({
       </div>
 
       {/* Heatmap */}
-
       <div className="mt-10 overflow-x-auto">
         <div className="flex gap-3">
           {/* Day labels */}
-
-          <div className="flex flex-col justify-between pr-2">
+          <div className="flex flex-col gap-2 pr-2">
             {days.map((day) => (
               <div
                 key={day}
@@ -115,7 +169,6 @@ export default function Heatmap({
           </div>
 
           {/* Weeks */}
-
           <div className="flex gap-2">
             {columns.map((week, weekIndex) => (
               <div key={weekIndex} className="flex flex-col gap-2">
@@ -139,7 +192,6 @@ export default function Heatmap({
       </div>
 
       {/* Legend */}
-
       <div className="mt-8 flex items-center justify-end gap-3">
         <span className="text-sm text-slate-500">Less</span>
 
